@@ -339,7 +339,7 @@ input:focus, select:focus { border-color: #d4af37; box-shadow: 0 0 10px rgba(212
 }
 .istaka-slot.drag-over { background-color: rgba(255, 215, 0, 0.25); border-radius: 2px; }
 
-/* 3. Sağ HUD Panel: Banka */
+/* 3. Sağ HUD Panel: Banka (Standart Taş Ebatları) */
 .hud-banka-panel { 
   width: 120px; 
   height: 124px; 
@@ -349,22 +349,28 @@ input:focus, select:focus { border-color: #d4af37; box-shadow: 0 0 10px rgba(212
   display: flex; 
   flex-direction: column; 
   align-items: center; 
+  justify-content: center;
   padding: 6px; 
   box-shadow: 0 8px 25px rgba(0,0,0,0.85); 
   cursor: pointer;
 }
-.banka-baslik { font-size: 11px; font-weight: 700; color: #ffdf78; margin-bottom: 8px; text-transform: uppercase; }
-.banka-taslar { display: flex; gap: 8px; justify-content: center; align-items: center; }
+.banka-baslik { font-size: 11px; font-weight: 700; color: #ffdf78; margin-bottom: 6px; text-transform: uppercase; }
+.banka-taslar { display: flex; gap: 8px; justify-content: center; align-items: center; width: 100%; }
+.hud-banka-panel .tas {
+  width: 45px !important;
+  height: 56px !important;
+  flex-shrink: 0;
+}
 
 /* =========================================================
-   TAŞ TASARIMI (PORSELEN / BEYAZ KEMİK & YILDIZLI & BİTİŞİK)
+   TAŞ TASARIMI (PORSELEN / BEYAZ KEMİK & %10 GENİŞLİK AZALTILMIŞ)
    ========================================================= */
 .tas { 
-  width: 100%; 
-  height: 57px; 
+  width: 45px; 
+  height: 56px; 
   background: linear-gradient(145deg, #ffffff 0%, #f6f0e6 60%, #e6dccb 100%); 
   border: 0.5px solid #d4cbb8; 
-  border-radius: 2px; 
+  border-radius: 3px; 
   display: flex; 
   flex-direction: column; 
   justify-content: center; 
@@ -380,24 +386,30 @@ input:focus, select:focus { border-color: #d4af37; box-shadow: 0 0 10px rgba(212
 .tas:hover { transform: translateY(-2px); box-shadow: inset 0 -2px 3px rgba(0,0,0,0.2), 0 8px 16px rgba(0,0,0,0.85); }
 .tas:active, .tas.surukleniyor { cursor: grabbing; opacity: 0.6; transform: scale(0.95); }
 
-/* Tur Bitti 10 Saniye Sayım Bannerı */
-.tur-sayim-banner { 
+/* Tur Bitti Alt 10 Saniye Sayım Bannerı */
+.alt-tur-sayim-banner { 
   position: fixed; 
-  top: 60px; 
+  bottom: 25px; 
   left: 50%; 
   transform: translateX(-50%); 
-  background: linear-gradient(135deg, #d4af37 0%, #fff0a0 50%, #b8860b 100%); 
-  color: #111; 
+  background: linear-gradient(135deg, rgba(20, 15, 10, 0.95) 0%, rgba(35, 20, 10, 0.95) 100%); 
+  border: 2px solid #ffd700; 
+  color: #ffffff; 
   font-size: 15px; 
-  font-weight: 900; 
-  padding: 8px 24px; 
+  font-weight: 800; 
+  padding: 10px 28px; 
   border-radius: 30px; 
-  box-shadow: 0 0 30px rgba(255, 215, 0, 0.9), 0 8px 25px rgba(0,0,0,0.9); 
-  z-index: 9999; 
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.7), 0 10px 30px rgba(0,0,0,0.95); 
+  z-index: 10001; 
   display: flex; 
   align-items: center; 
-  gap: 8px; 
+  gap: 12px; 
   letter-spacing: 0.5px;
+}
+.alt-tur-sayim-sayi {
+  color: #ffd700;
+  font-size: 22px;
+  font-weight: 900;
 }
 
 /* Taş Sayısı */
@@ -434,37 +446,18 @@ input:focus, select:focus { border-color: #d4af37; box-shadow: 0 0 10px rgba(212
   color: #111111; 
 }
 
-/* Okey Taşı (Altın Işıltılı Joker) */
-.tas.okey-tasi { 
-  border: 1.5px solid #ffd700; 
-  box-shadow: inset 0 -2px 3px rgba(0,0,0,0.2), 0 0 12px rgba(255, 215, 0, 0.7); 
-}
-.tas.okey-tasi::after { 
-  content: '★'; 
-  position: absolute; 
-  top: 1px; 
-  right: 2px; 
-  font-size: 9px; 
-  color: #ffd700; 
-}
-
-/* TERS ÇEVRİLMİŞ OKEY TAŞI (ARKASI DÖNÜK) */
+/* TERS ÇEVRİLMİŞ TAŞ (ARKASI DÖNÜK BEMBEYAZ KEMİK / PORSELEN) */
 .tas.tas-ters { 
-  background: linear-gradient(145deg, #2d1815 0%, #160807 100%) !important; 
-  border: 1.5px solid #d4af37 !important; 
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 0 12px rgba(212, 175, 55, 0.5) !important;
+  background: linear-gradient(145deg, #ffffff 0%, #f7f2e8 50%, #eae0ce 100%) !important; 
+  border: 0.5px solid #cfc4af !important; 
+  box-shadow: inset 0 -1.5px 2px rgba(0,0,0,0.12), 0 2px 5px rgba(0,0,0,0.6) !important;
 }
 .tas.tas-ters .tas-sayi-metin, .tas.tas-ters .tas-yildiz { 
   display: none !important; 
 }
 .tas.tas-ters::after { 
-  content: '★ OKEY ★' !important; 
-  position: static !important; 
-  font-size: 10px !important; 
-  font-weight: 900 !important; 
-  color: #ffd700 !important; 
-  letter-spacing: 0.5px !important;
-  text-align: center !important;
+  display: none !important;
+  content: '' !important;
 }
 
 /* Deste Kalan Sayı Taşı */

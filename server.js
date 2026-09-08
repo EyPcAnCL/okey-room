@@ -25,7 +25,11 @@ function botHamlesiYap(masa, pin) {
 
       // 1. Aşama: Taş çek (Eğer draw fazındaysa)
       if (masa.oyun.faz === 'draw') {
-        game.destedenTasCek(masa.oyun, suankiId);
+        const cekSonuc = game.destedenTasCek(masa.oyun, suankiId);
+        if (cekSonuc && cekSonuc.oyunBitti) {
+          elBittiIslemleri(masa, pin);
+          return;
+        }
       }
 
       // Kısa bir beklemeden sonra taş at
@@ -35,9 +39,12 @@ function botHamlesiYap(masa, pin) {
 
         const el = masa.oyun.eller[suankiId];
         if (el && el.length > 0) {
-          // Rastgele veya son taşı at
           const atilacakTas = el[el.length - 1];
-          game.tasAt(masa.oyun, suankiId, atilacakTas.id);
+          const atSonuc = game.tasAt(masa.oyun, suankiId, atilacakTas.id);
+          if (atSonuc && atSonuc.oyunBitti) {
+            elBittiIslemleri(masa, pin);
+            return;
+          }
         }
 
         masayiGuncelle(pin);

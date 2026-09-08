@@ -343,14 +343,24 @@ function tasAt(oyun, oyuncuId, tasId) {
   oyun.sonAtilanTas = { tas: atilanTas, oyuncuId };
   oyun.yandanCekilenTas = null;
 
-  // 101 KURALI: İşlek Taş Atma Cezası (+101 Ceza ve Kırmızı Artı)
+  // 101 KURALI: Cezalar (Okey Taşı Yere Atma +101 ve İşlek Taş Atma +101)
   let cezaUyarisi = null;
+
+  // 1. Okey Taşını Yana/Yere Atma Cezası (+101)
+  if (okeyMi(atilanTas, oyun.okeyBilgisi)) {
+    oyun.cezaPuanlari[oyuncuId] = (oyun.cezaPuanlari[oyuncuId] || 0) + 101;
+    oyun.cezaArtilar[oyuncuId] = (oyun.cezaArtilar[oyuncuId] || 0) + 1;
+    cezaUyarisi = `${oyun.isimler[oyuncuId]} Okey taşını yere attığı için +101 Ceza Puanı aldı (+) !`;
+  }
+
+  // 2. Açılmış Elde İşlek Taş Atma Cezası (+101)
   if (oyun.acilanPerler.length > 0 || oyun.acilanCiftler.length > 0) {
     const islekSonuc = tasIslenebilirMi(atilanTas, oyun.acilanPerler, oyun.acilanCiftler, oyun.okeyBilgisi);
     if (islekSonuc.islenebilir) {
       oyun.cezaPuanlari[oyuncuId] = (oyun.cezaPuanlari[oyuncuId] || 0) + 101;
       oyun.cezaArtilar[oyuncuId] = (oyun.cezaArtilar[oyuncuId] || 0) + 1;
-      cezaUyarisi = `${oyun.isimler[oyuncuId]} işlek taş attığı için +101 Ceza Puanı aldı (+) !`;
+      const islekMetin = `${oyun.isimler[oyuncuId]} işlek taş attığı için +101 Ceza Puanı aldı (+) !`;
+      cezaUyarisi = cezaUyarisi ? `${cezaUyarisi} ${islekMetin}` : islekMetin;
     }
   }
 

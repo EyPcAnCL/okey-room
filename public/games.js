@@ -1,4 +1,4 @@
-// games.js — 101 Okey İstemci, Istaka, Taş İşleme, Ters Okey ve 10sn Sayım Motoru
+// games.js — 101 Okey İstemci, Istaka, Taş Döndürme, Ceza (+) Rozetleri ve 10sn Yeni El Motoru
 
 const socket = io();
 const urlParams = new URLSearchParams(window.location.search);
@@ -14,9 +14,10 @@ const TOPLAM_SLOT = 28;
 const SATIR_SLOT_SAYISI = 14;
 let slots = new Array(TOPLAM_SLOT).fill(null);
 let suankiOyunDurumu = null;
+let oncekiOyunDurumu = null;
 let guncelMod = 'serbest'; // 'serbest' | 'per' | 'cift'
 let seciliTasId = null;
-let tersOkeyler = new Set(); // Arkası dönük (ters çevrilmiş) okey taşları
+let tersTaslar = new Set(); // Arkası dönük (bembeyaz ters çevrilmiş) taşlar
 
 // Sürükle-Bırak & Çekme Koruması
 let suruklenenSlotIndex = null;
@@ -290,7 +291,6 @@ function slotaTasBirak(kaynakSlot, hedefSlot, relativeX = 0.5) {
   const satirBasi = hedefSlot < SATIR_SLOT_SAYISI ? 0 : SATIR_SLOT_SAYISI;
   const satirSonu = hedefSlot < SATIR_SLOT_SAYISI ? (SATIR_SLOT_SAYISI - 1) : (TOPLAM_SLOT - 1);
 
-  // Çeyrek taş sol/sağ tercihine göre boşluk arama yönü
   let oncelikliYon = relativeX < 0.35 ? 'sol' : (relativeX > 0.65 ? 'sag' : 'sag');
 
   let bosSag = -1;
@@ -341,7 +341,7 @@ function tasOkeyMi(tas) {
   return tas.sayi === suankiOyunDurumu.okeyBilgisi.sayi && tas.renk === suankiOyunDurumu.okeyBilgisi.renk;
 }
 
-// Istakayı Ekrana Render Et (Yıldızlı, S Damgalı ve Çift Tıklamayla Ters Çevrilebilen Taşlar)
+// Istakayı Ekrana Render Et (Bembeyaz Sırtlı Ters Taşlar ve Çift Tıklamayla Her Taşı Döndürme)
 function istakayiEkranaBas() {
   const tumSlotlar = document.querySelectorAll('.istaka-slot');
 
@@ -351,19 +351,17 @@ function istakayiEkranaBas() {
 
     if (tas) {
       const tasDiv = document.createElement('div');
-      const okey = tasOkeyMi(tas);
 
       if (tas.fake) {
         tasDiv.className = 'tas renk-sahte';
         tasDiv.innerHTML = `<span class="tas-sayi-metin">S</span><span class="tas-yildiz">★</span>`;
       } else {
         tasDiv.className = `tas renk-${tas.renk}`;
-        if (okey) tasDiv.classList.add('okey-tasi');
         tasDiv.innerHTML = `<span class="tas-sayi-metin">${tas.sayi}</span><span class="tas-yildiz">★</span>`;
       }
 
-      // Kullanıcının eline gelen okey taşı varsayılan olarak sırtı dönük gelir veya çift tıklamayla ters döner
-      if (tersOkeyler.has(tas.id)) {
+      // Kullanıcının elindeki ters çevrilmiş veya otomatik sırtı dönük okey taşı bembeyaz arka yüzle gösterilir
+      if (tersTaslar.has(tas.id)) {
         tasDiv.classList.add('tas-ters');
       }
 
@@ -396,13 +394,13 @@ function istakayiEkranaBas() {
         istakayiEkranaBas();
       });
 
-      // Çift Tıklama (Okey Taşını Yüzünü Göster / Sırtını Çevir)
+      // Çift Tıklama (HERHANGİ bir taşı yüzü açık / bembeyaz sırtı dönük çevirme)
       tasDiv.addEventListener('dblclick', (e) => {
         e.stopPropagation();
-        if (tersOkeyler.has(tas.id)) {
-          tersOkeyler.delete(tas.id);
+        if (tersTaslar.has(tas.id)) {
+          tersTaslar.delete(tas.id);
         } else {
-          tersOkeyler.add(tas.id);
+          tersTaslar.add(tas.id);
         }
         istakayiEkranaBas();
       });
@@ -475,7 +473,7 @@ function acilanTaslariRenderEt(acilanPerler, acilanCiftler) {
     suankiOyunDurumu?.benimAcmaDurumu?.tur !== 'cift'
   );
 
-  // 1. Seri Perler (Fotoğraf 2'deki gibi yatay mini per satırları)
+  // 1. Seri Perler
   if (acilanPerler && Array.isArray(acilanPerler)) {
     acilanPerler.forEach((item, perIdx) => {
       const grupDiv = document.createElement('div');
@@ -544,7 +542,6 @@ function acilanTaslariRenderEt(acilanPerler, acilanCiftler) {
           miniTas.innerHTML = `<span class="tas-sayi-metin">S</span><span class="tas-yildiz">★</span>`;
         } else {
           miniTas.className = `tas-mini renk-${tas.renk}`;
-          if (tasOkeyMi(tas)) miniTas.classList.add('okey-tasi');
           miniTas.innerHTML = `<span class="tas-sayi-metin">${tas.sayi}</span><span class="tas-yildiz">★</span>`;
         }
         grupDiv.appendChild(miniTas);
@@ -577,7 +574,7 @@ function acilanTaslariRenderEt(acilanPerler, acilanCiftler) {
     });
   }
 
-  // 2. Çiftler (Fotoğraf 2'deki gibi dikey ikili gruplar)
+  // 2. Çiftler
   if (acilanCiftler && Array.isArray(acilanCiftler)) {
     acilanCiftler.forEach(item => {
       const grupDiv = document.createElement('div');
@@ -590,7 +587,6 @@ function acilanTaslariRenderEt(acilanPerler, acilanCiftler) {
           miniTas.innerHTML = `<span class="tas-sayi-metin">S</span><span class="tas-yildiz">★</span>`;
         } else {
           miniTas.className = `tas-mini renk-${tas.renk}`;
-          if (tasOkeyMi(tas)) miniTas.classList.add('okey-tasi');
           miniTas.innerHTML = `<span class="tas-sayi-metin">${tas.sayi}</span><span class="tas-yildiz">★</span>`;
         }
         grupDiv.appendChild(miniTas);
@@ -659,17 +655,17 @@ function skorTablosunuGuncelle(durum) {
   }
 }
 
-// 10 Saniye Sayım Bildirimi
+// 10 Saniye Sayım Bildirimi (Alt Sayım Bannerı)
 socket.on('yeni_el_sayim', (data) => {
-  let banner = document.getElementById('turSayimBanner');
+  let banner = document.getElementById('altTurSayimBanner');
   if (data.kalanSaniye > 0) {
     if (!banner) {
       banner = document.createElement('div');
-      banner.id = 'turSayimBanner';
-      banner.className = 'tur-sayim-banner';
+      banner.id = 'altTurSayimBanner';
+      banner.className = 'alt-tur-sayim-banner';
       document.body.appendChild(banner);
     }
-    banner.innerHTML = `⏱️ Yeni El Başlıyor: <strong>${data.kalanSaniye}s</strong>`;
+    banner.innerHTML = `⏱️ Yeni Oyun Başlıyor: <span class="alt-tur-sayim-sayi">${data.kalanSaniye}</span> sn`;
   } else {
     if (banner) banner.remove();
   }
@@ -691,6 +687,8 @@ socket.on('oyuncu_listesi_guncelle', (oyuncular) => {
 
 // Anlık Oyun Durumu Güncellemesi (Tüm Masa Senkronizasyonu)
 socket.on('oyun_durumu_guncelle', (durum) => {
+  const durumDegisti = !oncekiOyunDurumu || oncekiOyunDurumu.turNo !== durum.turNo || oncekiOyunDurumu.durum !== durum.durum;
+  oncekiOyunDurumu = suankiOyunDurumu;
   suankiOyunDurumu = durum;
   isDrawing = false;
 
@@ -729,9 +727,16 @@ socket.on('oyun_durumu_guncelle', (durum) => {
   // Skor Tablosunu Güncelle
   skorTablosunuGuncelle(durum);
 
+  // El bittiğinde skor tablosunu aç, yeni el başladığında kapat
+  const skorModal = document.getElementById('skorTablosuModal');
   if (durum.durum === 'el_bitti') {
-    const skorModal = document.getElementById('skorTablosuModal');
     if (skorModal) skorModal.style.display = 'flex';
+  } else if (durum.durum === 'oyun_suruyor') {
+    const banner = document.getElementById('altTurSayimBanner');
+    if (banner) banner.remove();
+    if (durumDegisti && skorModal) {
+      skorModal.style.display = 'none';
+    }
   }
 
   // Sıra Vurguları
@@ -755,7 +760,7 @@ socket.on('oyun_durumu_guncelle', (durum) => {
     timerDurdur();
   }
 
-  // 4 Koltuk ve Köşeler
+  // 4 Koltuk ve Köşeler (Kırmızı (+) Ceza Rozetleri)
   if (durum.koltuklar && Array.isArray(durum.koltuklar)) {
     durum.koltuklar.forEach(k => {
       let koltukEl, koseTasEl;
@@ -773,16 +778,25 @@ socket.on('oyun_durumu_guncelle', (durum) => {
         koseTasEl = document.getElementById('kutuSagUstTas');
       }
 
-      if (koltukEl && k.koltukYeri !== 'alt') {
-        if (k.siraBundaMi) {
-          koltukEl.classList.add('aktif-oyuncu');
-        } else {
-          koltukEl.classList.remove('aktif-oyuncu');
+      if (koltukEl) {
+        if (k.koltukYeri !== 'alt') {
+          if (k.siraBundaMi) {
+            koltukEl.classList.add('aktif-oyuncu');
+          } else {
+            koltukEl.classList.remove('aktif-oyuncu');
+          }
         }
+
         const isimEl = koltukEl.querySelector('.oyuncu-isim');
         if (isimEl) {
-          isimEl.innerHTML = k.isim + (k.cezaArtisi > 0 ? `<span class="ceza-artilar"> ➕x${k.cezaArtisi} (+${k.cezaPuani})</span>` : '');
+          let cezaHtml = '';
+          if (k.cezaArtisi > 0) {
+            const artilar = '+'.repeat(k.cezaArtisi);
+            cezaHtml = `<span class="ceza-artilar" title="${k.cezaPuani} Ceza Puanı">(${artilar})</span>`;
+          }
+          isimEl.innerHTML = `${k.isim} ${cezaHtml}`;
         }
+
         const durumEl = koltukEl.querySelector('.oyuncu-durum');
         if (durumEl) {
           if (k.acmaDurumu && k.acmaDurumu.acildiMi) {
@@ -813,24 +827,24 @@ socket.on('oyun_durumu_guncelle', (durum) => {
 
   // Kullanıcının Istakasını Senkronize Et
   if (durum.benimElim) {
-    elSenkronizasyonu(durum.benimElim);
+    elSenkronizasyonu(durum.benimElim, durumDegisti);
   }
 });
 
-// Gelen el listesi ile 28 slotu eşle & OKEY TAŞINI VARSAYILAN OLARAK SIRTI DÖNÜK YAP
-function elSenkronizasyonu(yeniEl) {
+// Gelen el listesi ile 28 slotu eşle & OKEY TAŞINI VARSAYILAN OLARAK BEMBEYAZ TERS YAP
+function elSenkronizasyonu(yeniEl, sifirla = false) {
   if (!yeniEl || !Array.isArray(yeniEl)) return;
 
   // Yeni gelen okey taşlarını otomatik olarak sırtı dönük yap
   yeniEl.forEach(tas => {
-    if (tasOkeyMi(tas) && !tersOkeyler.has(tas.id)) {
-      tersOkeyler.add(tas.id);
+    if (tasOkeyMi(tas) && !tersTaslar.has(tas.id)) {
+      tersTaslar.add(tas.id);
     }
   });
 
   const mevcutDoluSlotlar = slots.filter(t => t !== null);
 
-  if (mevcutDoluSlotlar.length === 0) {
+  if (sifirla || mevcutDoluSlotlar.length === 0) {
     slots.fill(null);
     const ustAdet = Math.ceil(yeniEl.length / 2);
     yeniEl.forEach((tas, i) => {
@@ -966,11 +980,10 @@ window.siralaPer = function () {
     return a.renk.localeCompare(b.renk);
   });
 
-  // 3. Istaka Slotlarına 1 Boşluk Bırakarak Yerleştir (Fotoğraf 2'deki gibi)
+  // 3. Istaka Slotlarına 1 Boşluk Bırakarak Yerleştir
   slots.fill(null);
   let slotIdx = 0;
 
-  // Tespit edilen perleri yerleştir
   for (const grup of gruplar) {
     if (slotIdx < SATIR_SLOT_SAYISI && (slotIdx + grup.length) > SATIR_SLOT_SAYISI) {
       slotIdx = SATIR_SLOT_SAYISI;
@@ -1003,7 +1016,7 @@ window.siralaPer = function () {
   hesaplaVeGoster();
 };
 
-// --- AKILLI ÇİFT SIRALAMA (FOTOĞRAF 2'DEKİ GİBİ İKİLİ GRUPLAR) ---
+// --- AKILLI ÇİFT SIRALAMA (İkili Gruplar) ---
 window.siralaCift = function () {
   guncelMod = 'cift';
   const seciliBtn = document.getElementById('seciliSiralama');
