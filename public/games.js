@@ -1,4 +1,4 @@
-// games.js — 101 Okey İstemci, Istaka, Taş Döndürme, Ceza (+) Rozetleri ve 10sn Yeni El Motoru
+// games.js — 101 Okey İstemci, Istaka, Çift Tıklamayla Taş Döndürme, Ceza (+) Rozetleri ve 10sn Yeni El Motoru
 
 const socket = io();
 const urlParams = new URLSearchParams(window.location.search);
@@ -18,6 +18,10 @@ let oncekiOyunDurumu = null;
 let guncelMod = 'serbest'; // 'serbest' | 'per' | 'cift'
 let seciliTasId = null;
 let tersTaslar = new Set(); // Arkası dönük (bembeyaz ters çevrilmiş) taşlar
+
+// Hızlı ve Kusursuz Çift Tıklama Takibi (DOM silinmesinden etkilenmez)
+let sonTiklananZaman = 0;
+let sonTiklananId = null;
 
 // Sürükle-Bırak & Çekme Koruması
 let suruklenenSlotIndex = null;
@@ -341,7 +345,7 @@ function tasOkeyMi(tas) {
   return tas.sayi === suankiOyunDurumu.okeyBilgisi.sayi && tas.renk === suankiOyunDurumu.okeyBilgisi.renk;
 }
 
-// Istakayı Ekrana Render Et (Bembeyaz Sırtlı Ters Taşlar ve Çift Tıklamayla Her Taşı Döndürme)
+// Istakayı Ekrana Render Et (Bembeyaz Sırtlı Ters Taşlar ve 2 Tıklamayla Hızlıca Çevirme)
 function istakayiEkranaBas() {
   const tumSlotlar = document.querySelectorAll('.istaka-slot');
 
@@ -366,9 +370,7 @@ function istakayiEkranaBas() {
       }
 
       if (seciliTasId === tas.id) {
-        tasDiv.style.border = '2px solid #ffd700';
-        tasDiv.style.boxShadow = '0 0 15px rgba(255,215,0,0.8)';
-        tasDiv.style.transform = 'translateY(-4px)';
+        tasDiv.classList.add('secili-tas');
       }
 
       tasDiv.draggable = true;
@@ -387,22 +389,36 @@ function istakayiEkranaBas() {
         suruklenenTas = null;
       });
 
-      // Tek Tıklama (Seçme)
+      // Hızlı Çift Tıklama Algılayıcı (2 hızlı tık anında yüzü/sırtı çevirir, tek tık seçer)
       tasDiv.addEventListener('click', (e) => {
         e.stopPropagation();
-        seciliTasId = seciliTasId === tas.id ? null : tas.id;
-        istakayiEkranaBas();
-      });
+        const simdi = Date.now();
 
-      // Çift Tıklama (HERHANGİ bir taşı yüzü açık / bembeyaz sırtı dönük çevirme)
-      tasDiv.addEventListener('dblclick', (e) => {
-        e.stopPropagation();
-        if (tersTaslar.has(tas.id)) {
-          tersTaslar.delete(tas.id);
-        } else {
-          tersTaslar.add(tas.id);
+        if (sonTiklananId === tas.id && (simdi - sonTiklananZaman) < 400) {
+          // 2 HIZLI TIK = ÇİFT TIKLAMA! Anında bembeyaz sırtı dönük veya yüzü açık yap
+          if (tersTaslar.has(tas.id)) {
+            tersTaslar.delete(tas.id);
+            tasDiv.classList.remove('tas-ters');
+          } else {
+            tersTaslar.add(tas.id);
+            tasDiv.classList.add('tas-ters');
+          }
+          seciliTasId = null;
+          document.querySelectorAll('.tas.secili-tas').forEach(el => el.classList.remove('secili-tas'));
+          sonTiklananZaman = 0;
+          sonTiklananId = null;
+          return;
         }
-        istakayiEkranaBas();
+
+        // Tek Tıklama (Seçme / Seçimi Kaldırma)
+        sonTiklananZaman = simdi;
+        sonTiklananId = tas.id;
+        seciliTasId = (seciliTasId === tas.id) ? null : tas.id;
+
+        document.querySelectorAll('.tas.secili-tas').forEach(el => el.classList.remove('secili-tas'));
+        if (seciliTasId === tas.id) {
+          tasDiv.classList.add('secili-tas');
+        }
       });
 
       slotDiv.appendChild(tasDiv);
@@ -858,6 +874,14 @@ function elSenkronizasyonu(yeniEl, sifirla = false) {
       }
     });
     istakayiEkranaBas();
+    hesaplaVeGoster();
+    return;
+  }
+
+  // Eğer mevcut el yeni gelen el ile aynı taşları içeriyorsa DOM'u sıfırlama (tıklamalar kesilmesin)
+  const mevcutIds = slots.filter(t => t !== null).map(t => t.id).sort().join(',');
+  const yeniIds = yeniEl.map(t => t.id).sort().join(',');
+  if (mevcutIds === yeniIds) {
     hesaplaVeGoster();
     return;
   }

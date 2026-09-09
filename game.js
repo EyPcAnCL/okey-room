@@ -557,12 +557,12 @@ function elSonuHesapla(oyun, kazananId) {
         }
         puan = elToplami;
       } else {
-        // El açmayan oyuncuya normalde +101, masada çift açan varsa +202 yazılır
-        puan = ciftAcanVar ? 202 : 101;
+        // 101 Kuralı: Hiç el açamayan oyuncuya 202 puan yazılır
+        puan = 202;
       }
     }
 
-    // Oyun içindeki işlek taş vb. ceza puanlarını ekle
+    // Oyun içindeki işlek taş atma, okey atma vb. +101 cezalarını skorun üstüne ekle
     const ceza = oyun.cezaPuanlari[pid] || 0;
     turSkorlari[pid] = puan + ceza;
   });
